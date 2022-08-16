@@ -1,0 +1,13 @@
+{
+  "name": "ecta",
+  "version": "1.0-alpha",
+  "author": {
+    "name": "Bogdanov",
+    "email": "bbogdanov_bog908@mail.ru"
+  },
+  "scripts": {
+    "dev": "tsc -w"
+  },
+  "keywords": ["ecta", "drawing", "rendering", "pixel", "pixelart", "canvas", "art", "enjoyable", "simple"],
+  "license": "MIT"
+}
