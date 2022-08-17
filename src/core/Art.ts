@@ -759,14 +759,10 @@ export class Art {
     
                 // Gamepad
                 this.gamepad.updateAfter();
-                
                 // Keyboard
                 this.keyboard.updateAfter();
-
                 // Mouse
-                this.mouse.justPressed = false;
-                this.mouse.last.x = this.mouse.x;
-                this.mouse.last.y = this.mouse.y;
+                this.mouse.updateAfter();
 
                 this.clock.delta = Date.now() - lastTime;
                 this.clock.fps = 1000 / this.clock.delta;

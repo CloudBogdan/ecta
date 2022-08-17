@@ -13,9 +13,10 @@ export class Mouse {
     start: IPoint = { x: 0, y: 0 }
     last: IPoint = { x: 0, y: 0 }
     movement: IPoint = { x: 0, y: 0 }
-
+    
     isPressed: boolean = false;
     justPressed: boolean = false;
+    justReleased: boolean = false;
     buttonPressed: number = 0;
 
     isInCanvas: boolean = false;
@@ -36,6 +37,7 @@ export class Mouse {
             e.preventDefault();
             
             this.isPressed = false;
+            this.justReleased = true;
         })
 
         addEventListener("pointermove", e=> {
@@ -64,6 +66,13 @@ export class Mouse {
         }
     }
 
+    updateAfter() {
+        this.justPressed = false;
+        this.justReleased = false;
+        this.last.x = this.x;
+        this.last.y = this.y;
+    }
+
     /**
      * @param {number} [button=0] Default is LMB
      * @returns {boolean}
@@ -78,10 +87,17 @@ export class Mouse {
     buttonJustPressed(button: number=0): boolean {
         return this.justPressed && this.buttonPressed == button;
     }
+    /**
+     * @param {number} [button=0] Default is LMB
+     * @returns {boolean}
+     */
+    buttonJustReleased(button: number=0): boolean {
+        return this.justReleased && this.buttonPressed == button;
+    }
 
     /**
      * @param {(e: MouseEvent)=>void} listener
-     * @returns {()=> void} Remove listener
+     * @returns {()=> void} Remove listener function
      */
     onMove(listener: (e: MouseEvent)=> void): ()=> void {
         addEventListener("pointermove", listener);
@@ -89,10 +105,18 @@ export class Mouse {
     }
     /**
      * @param {(e: MouseEvent)=>void} listener
-     * @returns {()=> void} Remove listener
+     * @returns {()=> void} Remove listener function
      */
     onPress(listener: (mouse: MouseEvent)=> void): ()=> void {
         addEventListener("pointerdown", listener);
         return ()=> removeEventListener("pointerdown", listener);
+    }
+    /**
+     * @param {(e: MouseEvent)=>void} listener
+     * @returns {()=> void} Remove listener function
+     */
+    onReleased(listener: (mouse: MouseEvent)=> void): ()=> void {
+        addEventListener("pointerup", listener);
+        return ()=> removeEventListener("pointerup", listener);
     }
 }

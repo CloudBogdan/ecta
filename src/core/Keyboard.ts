@@ -12,6 +12,9 @@ export class Keyboard {
     #keysJustPressed: {
         [key: string]: boolean
     } = {}
+    #keysJustUp: {
+        [key: string]: boolean
+    } = {}
 
     isAnyIsPressed: boolean = false;
     isAnyJustPressed: boolean = false;
@@ -29,6 +32,8 @@ export class Keyboard {
         });
         addEventListener("keyup", e=> {
             delete this.#keysPressed[formatKey(e.code)];
+
+            this.#keysJustUp[formatKey(e.code)] = true;
         });
     }
 
@@ -37,7 +42,9 @@ export class Keyboard {
     }
     updateAfter() {    
         this.isAnyJustPressed = false;
+
         this.#keysJustPressed = {};
+        this.#keysJustUp = {};
     }
 
     /**
@@ -57,7 +64,7 @@ export class Keyboard {
         } else
             return this.isAnyIsPressed;
     }
-
+    
     /**
      * @param {string} code Can used like `"KeyA"` or `"a"`
      * @returns {boolean}
@@ -74,6 +81,41 @@ export class Keyboard {
             return codes.filter(code=> this.#keysJustPressed[formatKey(code)]).length > 0 && codes.filter(code=> this.#keysPressed[formatKey(code)]).length > 0
         } else
             return this.isAnyJustPressed;
+    }
+
+    /**
+     * @param {string} code Can used like `"KeyA"` or `"a"`
+     * @returns {boolean}
+     */
+    keyJustUp(code: string): boolean {
+        return this.#keysJustUp[formatKey(code)];
+    }
+    /**
+     * @param {string[]} [codes] 
+     * @returns {boolean}
+     */
+    anyKeyJustUp(codes?: string[]): boolean {
+        if (codes) {
+            return codes.filter(code=> this.#keysJustUp[formatKey(code)]).length > 0;
+        } else
+            return this.isAnyJustPressed;
+    }
+
+    /**
+     * @param {(e: KeyboardEvent)=> void} listener
+     * @returns {()=> void} Remove listener function
+     */
+    onKeyPressed(listener: (e: KeyboardEvent)=> void): ()=> void {
+        addEventListener("keydown", listener);
+        return ()=> removeEventListener("keydown", listener);
+    }
+    /**
+     * @param {(e: KeyboardEvent)=> void} listener
+     * @returns {()=> void} Remove listener function
+     */
+    onKeyReleased(listener: (e: KeyboardEvent)=> void): ()=> void {
+        addEventListener("keyup", listener);
+        return ()=> removeEventListener("keyup", listener);
     }
 }
 

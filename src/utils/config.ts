@@ -36,13 +36,13 @@ const config = Object.freeze({
         "empty": 0
     } as IEctaSpritePattern,
     
-    DEFAULT_FONT: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAE4AAAAwCAYAAAC/gkysAAAC20lEQVRoge1a0XLDIAyD3P7/l7OXuUeZJSzjNt0ueulqHKEYY4d0rd1IobPB8zzP1lrrvXfPPo+t7FU8nr333u1z5Y80MZ75+qMtYESeHfl7Y4wH+St2pAVpjXIgLAPn3azZdydf8VfwZPRE7iuUccheIZbxo2uUHRC9fuSJ3NcycOrk5w92/dV5ma+ih3FVZfUNliXMPo9daR8/32E/PIcRma5aZZ/HWJd8N9I1DiFTO7xAvLqmsCRBesbvx3hRhSDlOcv8Z1EqRxUsaBE95V1VFYV8KzKXZZCNK/yKnhsAvbVrz5gq/5i1Nhbxj9iRJs92mEE9IaBrlC6Z4Ve4VbBtbeP29zEaI90kYq+6idnmZdtKD+Pf0XmsSDKZWFFI0SJ625PpZPyKzpn/axSlCFAzMcsT0YM4qhbxRjVsVebVOQe82870KPqz9tlnnnvrfZxq9x5Q2TUIn7D9nrpqBeEVPKsTAvLPq/uAs6rCgTLUgrbTJVWkf3NQgeqTMm9GixpUNu/dpavAOpv3HUU90/UyXRjNq/Ds6nmcVb1AqLDaxNJ5HlO6c+YcnDlRRLi+xsFxL3vfme9sR/6zmIqaoSxU1I7uy+xPzQE9Z3moeL6zwo3mULDqxFHfqP5fGTc6qCvJMlTFqlauMgJxqHNmuW4AhN4AR+3/BSij4b0qbduzIxsTiB4xVChNQNW/1KcQRZ93mP1KZAIdJmMrk55k8s0EtGJehScVuKsySFmsjF31/aTd8vfBViuzkmjLIz8l05m/qjOqx7M9zqrqBOgaGxttyHf1KMOOep5vRa2Ukck6VYhSeNWMU/hLazSbtKLAZoKmbuFdjTLUG1D5VsFUMoWNKYtz42qotaBidRm3WvuUDM2UoBlPv3LNROob1ExnU970onHWfSuC5IG+yHzFhDs4T/7PQVGtxrHzZif0S/6nvDpiwZmDirJytyOHkSFWHiNeWeOQfla7o/gG2n+BLNAKVVgAAAAASUVORK5CYII=",
+    DEFAULT_FONT: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAE4AAAAwCAYAAAC/gkysAAAC10lEQVRoge1a0XLDIAyD3P7/l7OXsaPMki3jNL1d9NLVOEIxxg7pWnuQQmeD53merbXWe++WfR3z7FU8lr333sen5480MZ71+qM5GESWHflbY4wH+St2pAVpjXIguIGzbnbYdyf3+Ct4Mnoi9xXKOGSvEMv40TXKDoheP/NE7ssNnDr5+YNdf3Ve5qvoYVxVWf2AZQmzr2N32ufPd9gPy2FGpqtW2dcx1iXfjXSNQ8jUDisQV9cUliRIz/z9mC+qEKQ8Zw3/VZTKUYURtIie8q6qikK+FZnLMmiMK/yKngcAvbV7z5gq/5y1YyziH7EjTZbtGAb1hICuUbpkhl/hVsG29Rgffx+zMdJNIvaqm1htVrZ5ehj/js7DI8lkYkUhRYtobU+mk/ErOlf+r1mUIkDNxCxPRA/iqFrEB9UYq7Kuzjnh3XamR9Gfta8+69xb7+NUu/WAyq5B+ITt99JVKwjv4PFOCMg/r+4DzqoKB8rQEbSdLqki/ZuDClSflHkzWtSgsnmfLl0F1tms7yjqma6X6cJoXoVnV8/vWdUKhIpRm1g6r2NKd86cgzMnigjX1zw472XrO/Nd7ch/FVNRM5SFitrRfQ37S3NAz1kWKp7vRuFGcyjwOnHUN6r/T8bNDupKsgxV4dVKLyMQhzpnlusBQ7a7fdIqVGph2R66gLXt1ASG79UL4G15xT81yWr7rxlaEji2MulJFl81oIoWj+OyjLszg9QAVQZ0l+eBB7ZamZVEWx75KZnO/FWdUT2W7fesqk6Arhljsw35eg/K7Khn+arbqWT7ZbJOFaIUXjXjFP7SGs0mrSiwmaCpW3hXowz1BlQ+L5hKprAxZXEe3I2KWpDJTCV70JiXbUpNjOLlV66ViL2fsibNdDblTS8aZ923IkgW6IvMKybcwXnyfw6Kah0cO+8NQ7/kV72l3QULzhpUlJW7HTmMDLHyGHFljUP61dpt4RvafJj/xUhsogAAAABJRU5ErkJggg==",
     DEFAULT_FONT_MAPPING: " abcdefghijklmnopqrstuvwxyzабвгдежзиклмнопрстуфхцчшщъыьэюя0123456789+-=.,;:*/()&^<>%$#@!~\"'`?|\\_[]{}",
     DEFAULT_FONT_PATTERN: {
         " ": { width: 4 },
         ".": { width: 3, offsetX: -1 },
-        ",": { width: 4, offsetX: -1, offsetY: 1 },
-        ";": { width: 3, offsetX: -1 },
+        ",": { width: 3, offsetX: -1, offsetY: 1 },
+        ";": { width: 3, offsetX: -1, offsetY: 1 },
         ":": { width: 3, offsetX: -1 },
         "(": { width: 4 },
         ")": { width: 4 },

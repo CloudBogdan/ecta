@@ -11,7 +11,7 @@ const stars = [];
 let isEcta = false;
 
 let text = "";
-const thisIsEcta = "This is Ecta!"
+let title = "This is Ecta!"
 
 function prestart() {
     // Load some assets...
@@ -105,40 +105,36 @@ function draw() {
     }
 
     // Some text
-    if (isEcta) art.monospace();
-    else art.noMonospace();
-    
     art.text(
-        thisIsEcta,
-        art.width/2 - art.getTextWidth(thisIsEcta)/2,
+        title,
+        art.width/2 - art.getTextWidth(title)/2,
         art.height/2+32,
         "white"
     );
 
+    const command = `>${ text }`;
+    
     art.alpha(.2)
     art.strokeRect(
-        art.width/2 - art.getTextWidth(">" + text)/2,
+        art.width/2 - art.getTextWidth(command)/2,
         art.height/2+38,
-        art.getTextWidth(">" + text),
+        art.getTextWidth(command),
         7,
         1,"gray-brown"
     );
     art.alpha(1)
-
-    art.text(">" + text + ((art.time % 40 < 20) ? "_" : ""), art.width/2 - art.getTextWidth(">" + text)/2, art.height/2+38, "gray-brown");
+    
+    art.text(command + ((art.time % 40 < 20) ? "_" : ""), art.width/2 - art.getTextWidth(command)/2, art.height/2+38, "gray-brown");
 }
 
-addEventListener("keydown", e=> {
+art.keyboard.onKeyPressed(e=> {
     const key = e.key.toLowerCase();
 
     if (key == "backspace") {
         if (text.length > 0)
             text = text.substring(0, text.length-1);
     } else {
-        if (!key.match(/shift|control|tab|alt/gm)) {
-            if (text.length >= 18)
-                text = "";
-            
+        if (!key.match(/shift|control|tab|alt/gm) && text.length < 24) {
             text += key.replace(/key|digit/gm, "").replace(/space/gm, " ");
         }
     }
