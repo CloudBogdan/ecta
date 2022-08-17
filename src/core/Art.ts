@@ -11,8 +11,16 @@ import { Mouse } from "./Mouse.js";
 export interface IEctaPalette {
     [key: string]: string
 }
-export interface IEctaSpriteMapping {
+export interface IEctaSpritePattern {
     [key: string]: number
+}
+export interface IEctaFontPattern {
+    [key: string]: {
+        width: number
+        offsetX?: number
+        offsetY?: number
+        margin?: number
+    }
 }
 export interface IEctaClock {
     time: number
@@ -30,7 +38,6 @@ export interface IEctaFontSheet {
     loaded: boolean
 }
 
-
 /**
  * @author bogdanov
  * @export
@@ -42,18 +49,21 @@ export class Art {
     context: CanvasRenderingContext2D
 
     started: boolean = false
+    clock: IEctaClock
     
     palette: IEctaPalette
-    spritePattern: IEctaSpriteMapping
-    clock: IEctaClock
+
+    spritePattern: IEctaSpritePattern
     #spriteSheet: IEctaSpriteSheet
-    #fontSheet: IEctaFontSheet
+    
+    fontMapping: string
+    fontPattern: IEctaFontPattern
+    #font: IEctaFontSheet
 
     mouse: Mouse
     keyboard: Keyboard
     gamepad: Gamepad
     camera: Camera
-    utils: typeof Utils
 
     particles: IDrawableObject[]
 
@@ -64,6 +74,7 @@ export class Art {
     drawing: {
         pixelPerfect: boolean
         cameraFactor: IPoint
+        monospace: boolean
     }
 
     prestart: ()=> void = ()=> {}
@@ -80,20 +91,25 @@ export class Art {
         this.context.imageSmoothingEnabled = false;
         this.context.imageSmoothingQuality = "low";
 
-        this.palette = config.DEFAULT_PALETTE;
-        this.spritePattern = { "empty": 0 };
         this.clock = {
             time: 0,
             fps: 0,
             delta: 0
         }
+        
+        this.palette = config.DEFAULT_PALETTE;
+        
+        this.spritePattern = config.DEFAULT_SPRITE_SHEET_PATTERN;
         this.#spriteSheet = {
             image: new Image(),
             width: 0,
             height: 0,
             loaded: false
         };
-        this.#fontSheet = {
+
+        this.fontMapping = config.DEFAULT_FONT_MAPPING;
+        this.fontPattern = config.DEFAULT_FONT_PATTERN;
+        this.#font = {
             image: new Image(),
             loaded: false
         }
@@ -102,7 +118,6 @@ export class Art {
         this.keyboard = new Keyboard();
         this.gamepad = new Gamepad(this);
         this.camera = new Camera();
-        this.utils = Utils;
 
         this.particles = [];
         
@@ -113,7 +128,8 @@ export class Art {
         }
         this.drawing = {
             pixelPerfect: false,
-            cameraFactor: { x: 1, y: 1 }
+            cameraFactor: { x: 1, y: 1 },
+            monospace: false
         }
     }
 
@@ -233,10 +249,15 @@ export class Art {
      * @param {?string} [color]
      */
     strokeRect(x: number, y: number, width: number, height: number, thickness: number=1, color?: string) {
-        this.line(x, y, x+width, y, thickness, color);
-        this.line(x+width, y, x+width, y+height, thickness, color);
-        this.line(x+width, y+height, x, y+height, thickness, color);
-        this.line(x, y, x, y+height, thickness, color);
+        const rx = x;
+        const ry = y;
+        const rw = width-1;
+        const rh = height-1;
+        
+        this.line(rx, ry, rx+rw, ry, thickness, color); // top
+        this.line(rx+rw, ry+1, rx+rw, ry+rh-1, thickness, color); // right
+        this.line(rx+rw, ry+rh, rx, ry+rh, thickness, color); // bottom
+        this.line(rx, ry+1, rx, ry+rh-1, thickness, color); // left
     }
     /**
      * @param {number} fromX
@@ -364,6 +385,12 @@ export class Art {
     noPixelPerfect() {
         this.drawing.pixelPerfect = false;
     }
+    monospace() {
+        this.drawing.monospace = true;
+    }
+    noMonospace() {
+        this.drawing.monospace = false;
+    }
     /**
      * @param {number} [factorX=1]
      * @param {number} [factorY]
@@ -378,37 +405,88 @@ export class Art {
      * @param {number} y
      */
     text(text: string | number, x: number, y: number, color?: string) {
-        const _text = text.toString().split("\n");
+        const lines = text.toString().split("\n");
         color && this.color(color);
 
+        // Tint text
         let buffer;
-        if (this.#fontSheet.loaded) {
+        if (this.#font.loaded) {
             buffer = document.createElement("canvas");
             const bx = buffer.getContext("2d")!;
             buffer.width = config.FONT_SHEET_WIDTH;
             buffer.height = config.FONT_SHEET_HEIGHT;
 
-            bx.drawImage(this.#fontSheet.image, 0, 0);
+            bx.drawImage(this.#font.image, 0, 0);
             
             bx.globalCompositeOperation = "multiply";
             bx.fillStyle = this.context.fillStyle;
             bx.fillRect(0, 0, buffer.width, buffer.height);
 
             bx.globalCompositeOperation = "destination-atop";
-            bx.drawImage(this.#fontSheet.image, 0, 0);
+            bx.drawImage(this.#font.image, 0, 0);
         }
         
-        for (let i = 0; i < _text.length; i ++) {
-            const t = _text[i].replace(/\\n/gm, "").replace(/ё/gm, "е").replace(/й/gm, "и");
-            for (let j = 0; j < t.length; j ++) {
+        // Draw lines
+        for (let i = 0; i < lines.length; i ++) {
+            const word = Utils.formatString(lines[i]);
+            
+            // Draw chars
+            for (let j = 0; j < word.length; j ++) {
+                const char = word[j].toLowerCase();
+                const charPattern = this.fontPattern[char];
+
+                const offsetX = charPattern?.offsetX || 0;
+                const offsetY = charPattern?.offsetY || 0;
+                
+                let charOffset = 0;
+
+                if (!this.drawing.monospace) {
+                    // Calculate width of all previous char
+                    for (let k = 0; k < word.slice(0, j).length; k ++) {
+                        const prevChar = word.slice(0, j)[k];
+                        const prevCharWidth = this.fontPattern[prevChar]?.width || config.CHAR_WIDTH;
+                        const prevCharMargin = this.fontPattern[prevChar]?.margin || -1;
+                        charOffset += prevCharWidth + prevCharMargin;
+                    }
+                } else {
+                    charOffset = j * config.CHAR_WIDTH
+                }
+                
                 this.#spriteChar(
-                    buffer || this.#fontSheet.image,
-                    x + j*config.CHAR_WIDTH,
-                    y + i*config.CHAR_HEIGHT,
-                    t[j]
+                    buffer || this.#font.image,
+                    x + charOffset + offsetX,
+                    y + i*config.CHAR_HEIGHT + offsetY,
+                    char
                 );
             }
         }
+    }
+    getTextWidth(text: string | number): number {
+        let widths = [];
+        const lines = text.toString().split("\n");
+
+        if (!this.drawing.monospace) {
+            for (let i = 0; i < lines.length; i ++) {
+                const word = Utils.formatString(lines[i]);
+                widths.push(0);
+                
+                for (let j = 0; j < word.length; j ++) {
+                    const char = word[j].toLowerCase();
+                    const charPattern = this.fontPattern[char];
+
+                    const width = charPattern?.width || config.CHAR_WIDTH;
+                    const margin = charPattern?.margin || -1;
+                    widths[i] += width + margin;
+                }
+            }
+        } else {
+            for (let i = 0; i < lines.length; i ++) {
+                const word = Utils.formatString(lines[i]);
+                widths.push(word.length*config.CHAR_WIDTH);
+            }
+        }
+
+        return Math.max(...widths)+1;
     }
 
     // Utils
@@ -512,8 +590,24 @@ export class Art {
     /**
      * @param {{ [key: string]: string }} pattern
      */
-    setSpritePattern(pattern: IEctaSpriteMapping) {
+    setSpritePattern(pattern: IEctaSpritePattern) {
         this.spritePattern = { ...this.spritePattern, ...pattern };
+    }
+    /**
+     * @param {{ [key: string]: { width: number, offsetX?: number, offsetY?: number, margin?: number }}} pattern
+     */
+    setFontPattern(pattern: IEctaFontPattern) {
+        this.fontPattern = { ...this.fontPattern, ...pattern };
+    }
+    /**
+     * @param {string} mapping
+     * @param {boolean} [override=true]
+     */
+    setFontMapping(mapping: string, override: boolean=true) {
+        if (override)
+            this.fontMapping = mapping;
+        else
+            this.fontMapping += mapping;
     }
     /**
      * @param {string} src
@@ -525,7 +619,7 @@ export class Art {
      * @param {string} src
      */
     loadFontSheet(src: string) {
-        this.#fontSheet.image.src = src;
+        this.#font.image.src = src;
     }
     /**
      * @param {number} x
@@ -584,9 +678,9 @@ export class Art {
      * @readonly
      * @type {{ image: HTMLImageElement }}
      */
-    get fontSheet(): Omit<IEctaFontSheet, "loaded"> {
+    get font(): Omit<IEctaFontSheet, "loaded"> {
         return {
-            image: this.#fontSheet.image,
+            image: this.#font.image,
         }
     }
     /**
@@ -627,13 +721,14 @@ export class Art {
         this.canvas.height = this.settings.height;
 
         // Default assets
-        this.#fontSheet.image.src = config.DEFAULT_FONT;
+        this.#font.image.src = config.DEFAULT_FONT;
         this.#spriteSheet.image.src = config.DEFAULT_SPRITE_SHEET;
 
         this.prestart();
         
         const start = ()=> {
             if (this.started) return;
+            this.started = true;
             
             this.start();
             
@@ -642,21 +737,17 @@ export class Art {
             
             const loop = ()=> {
                 requestAnimationFrame(loop);
-                this.clock.time ++;
-
-                this.clock.delta = Date.now() - lastTime;
-                this.clock.fps = 1000 / this.clock.delta;
-                lastTime = Date.now();
-                lag += this.clock.delta;
-    
+                
                 this.gamepad.update();
                 this.keyboard.update();
 
                 this.camera.update();
 
                 while (lag >= 1000/60) {
+                    this.clock.time ++;
+                    
                     this.update();
-
+    
                     for (let i = 0; i < this.particles.length; i ++) {
                         const part = this.particles[i];
                         part.update(this.particles, i);
@@ -676,6 +767,11 @@ export class Art {
                 this.mouse.justPressed = false;
                 this.mouse.last.x = this.mouse.x;
                 this.mouse.last.y = this.mouse.y;
+
+                this.clock.delta = Date.now() - lastTime;
+                this.clock.fps = 1000 / this.clock.delta;
+                lastTime = Date.now();
+                lag += this.clock.delta;
             }
             loop();
         }
@@ -684,23 +780,26 @@ export class Art {
             this.#spriteSheet.width = Math.floor(this.#spriteSheet.image.width/config.SPRITE_SIZE)*config.SPRITE_SIZE;
             this.#spriteSheet.height = Math.floor(this.#spriteSheet.image.height/config.SPRITE_SIZE)*config.SPRITE_SIZE;
             this.#spriteSheet.loaded = true;
+            start();
         })
         this.#spriteSheet.image.addEventListener("error", (err)=> {
             console.error(`Ecta: Cannot load sprite sheet!\n${ err.message }`)
             this.#spriteSheet.loaded = false;
+            start();
         })
 
-        this.#fontSheet.image.addEventListener("load", ()=> {
-            this.#fontSheet.loaded = true;
+        this.#font.image.addEventListener("load", ()=> {
+            this.#font.loaded = true;
+            start();
         })
-        this.#fontSheet.image.addEventListener("error", (err)=> {
+        this.#font.image.addEventListener("error", (err)=> {
             console.error(`Ecta: Cannot load font!\n${ err.message }`)
-            this.#fontSheet.loaded = false;
+            this.#font.loaded = false;
+            start();
         })
-
-        start();
-        
+            
         element.appendChild(this.canvas);
+
     }
 
     // Misc
@@ -743,10 +842,10 @@ export class Art {
         return { x: px, y: py }
     }
     #spriteChar(sheet: CanvasImageSource, x: number, y: number, char: string) {
-        const index = config.FONT_PATTERN.indexOf(char.toLowerCase());
+        const index = this.fontMapping.indexOf(char.toLowerCase());
         const pos = this.#cameraFactorPoint(x, y);
         
-        if (index >= 0 && this.#fontSheet.loaded) {
+        if (index >= 0 && this.#font.loaded) {
             const sx = index*6 % 78;
             const sy = Math.floor(index*6 / 78)*6;
 

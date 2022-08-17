@@ -140,6 +140,9 @@ class Utils {
     safeValue<T>(value: T | undefined | null, safe: T): T {
         return (value === undefined || value === null) ? safe : value;
     }
+    formatString(string: string): string {
+        return string.replace(/\\n/gm, "").replace(/ё/gm, "е").replace(/й/gm, "и");
+    }
 
     // Private
     #parseRect(shortRect: IShortRect): IRect {

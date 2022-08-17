@@ -50,7 +50,7 @@ export class Mouse {
 
             this.isInCanvas = this.x >= 0 && this.x < art.width && this.y >= 0 && this.y < art.height;
         })
-        addEventListener("contextmenu", e=> {
+        art.canvas.addEventListener("contextmenu", e=> {
             e.preventDefault();
         })
         
@@ -58,8 +58,8 @@ export class Mouse {
             const bounds = art.canvas.getBoundingClientRect();
             
             return {
-                x: Math.floor((clientX - bounds.left + .5) / (bounds.width / art.width)),
-                y: Math.floor((clientY - bounds.top + .5) / (bounds.height / art.height))
+                x: ((clientX - bounds.left + .5) / (bounds.width / art.width)),
+                y: ((clientY - bounds.top + .5) / (bounds.height / art.height))
             }
         }
     }

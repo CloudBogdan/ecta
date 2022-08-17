@@ -1,6 +1,6 @@
 import { Art, Color, Utils } from "../dist/index.js";
 
-export const art = new Art();
+const art = new Art();
 
 art.prestart = prestart;
 art.start = start;
@@ -8,9 +8,10 @@ art.update = update;
 art.draw = draw;
 
 const stars = [];
-const points = [];
-let text = "";
 let isEcta = false;
+
+let text = "";
+const thisIsEcta = "This is Ecta!"
 
 function prestart() {
     // Load some assets...
@@ -20,13 +21,8 @@ function start() {
     // ...
 }
 function update() {
-    // Set points
-    points.push({ x: art.mouse.x, y: art.mouse.y });
-    if (points.length > 4)
-        points.shift();
-    
     // Spawn stars
-    if (art.time % 40 == 0) {
+    if (art.time % 10 == 0 || art.isMouse()) {
         stars.push({
             x: Utils.random(art.width/2 - 40, art.width/2 + 40),
             y: Utils.random(art.height/2 - 24, art.height/2),
@@ -48,13 +44,25 @@ function update() {
     if (art.justMouse()) {
         isEcta = !isEcta;
         art.camera.shake(.1);
+
+        for (let i = 5; i > 0; i --) {
+            art.pushParticle(
+                art.width/2 + Utils.randomInt(-20, 20), art.height/2,
+                Utils.randomInt(40, 80),
+                Utils.random(-2, 2), Utils.random(-2, 2),
+                Utils.randomInt(8, 12),
+                "white"
+            )
+        }
+        
     }
 }
 function draw() {
     art.background();
     art.pixelPerfect();
+    art.cameraFactor(1);
 
-    // HELLO
+    // HELLO trail
     for (let count = 2; count > 0; count --) {
 
         for (let i = 0; i < 5; i ++) {
@@ -69,6 +77,7 @@ function draw() {
         }
 
     }
+    // HELLO
     for (let i = 0; i < 5; i ++) {
         art.sprite(
             art.width/2 - 5*10/2 + i*10 + Utils.sin(art.time/20 + i/4, 1, 4),
@@ -76,6 +85,8 @@ function draw() {
             i+1 + (!isEcta ? 7 : 0)
         );
     }
+
+    art.drawParticles();
     
     // Draw stars
     for (let i = 0; i < stars.length; i ++) {
@@ -93,19 +104,28 @@ function draw() {
         }
     }
 
-    // Line
-    for (let i = 0; i < points.length; i ++) {
-        const lastPoint = points[i-1];
-        const point = points[i];
-        
-        if (lastPoint) {
-            art.line(lastPoint.x, lastPoint.y, point.x, point.y, 1, "white");
-        }
-    }
-
     // Some text
-    art.text("This is ecta!", art.width/2 - 13/2*5, art.height/2+32, "white");
-    art.text(">" + text + ((art.time % 40 < 20) ? "_" : ""), art.width/2 - (text.length+1)/2*5, art.height/2+38, "gray-brown");
+    if (isEcta) art.monospace();
+    else art.noMonospace();
+    
+    art.text(
+        thisIsEcta,
+        art.width/2 - art.getTextWidth(thisIsEcta)/2,
+        art.height/2+32,
+        "white"
+    );
+
+    art.alpha(.2)
+    art.strokeRect(
+        art.width/2 - art.getTextWidth(">" + text)/2,
+        art.height/2+38,
+        art.getTextWidth(">" + text),
+        7,
+        1,"gray-brown"
+    );
+    art.alpha(1)
+
+    art.text(">" + text + ((art.time % 40 < 20) ? "_" : ""), art.width/2 - art.getTextWidth(">" + text)/2, art.height/2+38, "gray-brown");
 }
 
 addEventListener("keydown", e=> {
