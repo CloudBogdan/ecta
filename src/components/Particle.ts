@@ -52,6 +52,13 @@ class Particle implements IDrawableObject {
             particles.splice(index, 1);
     }
     draw(art: Art) {
+        if (!(
+            art.isPointInCamera(this.x - this.size/2, this.y - this.size/2) ||
+            art.isPointInCamera(this.x + this.size/2, this.y - this.size/2) ||
+            art.isPointInCamera(this.x + this.size/2, this.y + this.size/2) ||
+            art.isPointInCamera(this.x - this.size/2, this.y + this.size/2)
+        )) return;
+        
         art.ellipse(
             Math.floor(this.x),
             Math.floor(this.y),

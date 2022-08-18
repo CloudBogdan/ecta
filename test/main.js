@@ -10,6 +10,8 @@ art.draw = draw;
 const stars = [];
 let isEcta = false;
 
+let lastFps = 0;
+
 let text = "";
 let title = "This is Ecta!"
 
@@ -37,7 +39,7 @@ function update() {
 
         star.size += .4;
 
-        if (star.size >= 6)
+        if (star.size > 6)
             stars.splice(i, 1);
     }
 
@@ -45,7 +47,7 @@ function update() {
         isEcta = !isEcta;
         art.camera.shake(.1);
 
-        for (let i = 5; i > 0; i --) {
+        for (let i = 10; i > 0; i --) {
             art.pushParticle(
                 art.width/2 + Utils.randomInt(-20, 20), art.height/2,
                 Utils.randomInt(40, 80),
@@ -54,13 +56,30 @@ function update() {
                 "white"
             )
         }
-        
     }
+    if (art.isMouse(2)) {
+        for (let i = 10; i > 0; i --) {
+            art.pushParticle(
+                art.width/2 + Utils.randomInt(-20, 20), art.height/2,
+                Utils.randomInt(40, 80),
+                Utils.random(-2, 2), Utils.random(-2, 2),
+                Utils.randomInt(8, 12),
+                "white"
+            )
+        }
+    }
+
+    art.camera.move(
+        +art.isButton("right") - +art.isButton("left"),
+        +art.isButton("down") - +art.isButton("up"),
+    );
 }
+
 function draw() {
+    art.cameraFactor(0)
     art.background();
     art.pixelPerfect();
-    art.cameraFactor(1);
+    art.cameraFactor(1)
 
     // HELLO trail
     for (let count = 2; count > 0; count --) {
@@ -92,23 +111,14 @@ function draw() {
     for (let i = 0; i < stars.length; i ++) {
         const star = stars[i];
 
-        art.color(star.color);
-
-        if (star.size <= 4) {
-            art.star(star.x, star.y, star.size);
-        } else {
-            art.pixel(star.x-3, star.y);
-            art.pixel(star.x+3, star.y);
-            art.pixel(star.x, star.y-3);
-            art.pixel(star.x, star.y+3);
-        }
+        art.star(star.x, star.y, star.size, star.size > 4, star.color);
     }
 
     // Some text
     art.text(
         title,
         art.width/2 - art.getTextWidth(title)/2,
-        art.height/2+32,
+        art.height/2 + 32,
         "white"
     );
 
@@ -117,14 +127,45 @@ function draw() {
     art.alpha(.2)
     art.strokeRect(
         art.width/2 - art.getTextWidth(command)/2,
-        art.height/2+38,
+        art.height/2+40,
         art.getTextWidth(command),
         7,
         1,"gray-brown"
     );
     art.alpha(1)
     
-    art.text(command + ((art.time % 40 < 20) ? "_" : ""), art.width/2 - art.getTextWidth(command)/2, art.height/2+38, "gray-brown");
+    art.text(command + ((art.time % 40 < 20) ? "_" : ""), art.width/2 - art.getTextWidth(command)/2, art.height/2 + 40, "gray-brown");
+    art.text(lastFps.toFixed(0), art.width-12, 0, "white");
+    art.text(art.particles.length, art.width-12, 12, "white");
+
+    // Water
+    const waterHeight = Math.floor(art.height/3);
+
+    art.cameraFactor(0);
+    art.alpha(.2);
+    art.line(0, art.height-waterHeight-1, art.width, art.height-waterHeight-1, 1, "white");
+    art.alpha(1);
+    
+    // Water pixels modifier (shader)
+    art.pixelsModifier((index, x, y, color, imageData)=> {
+        const px = x + Utils.sin(art.time/10 + y - art.camera.y, .4, 2);
+        const py = y;
+
+        return {
+            x: y > art.height - waterHeight ? px : x,
+            y: y > art.height - waterHeight ? py : y,
+            color: y > art.height - waterHeight && [
+                imageData.data[((art.height + waterHeight - y)*art.width + x)*4],
+                imageData.data[((art.height + waterHeight - y)*art.width + x)*4+1],
+                imageData.data[((art.height + waterHeight - y)*art.width + x)*4+2],
+                imageData.data[((art.height + waterHeight - y)*art.width + x)*4+3],
+            ]
+        }
+    });
+
+    if (art.time%10 == 0) {
+        lastFps = art.clock.fps
+    }
 }
 
 art.keyboard.onKeyPressed(e=> {

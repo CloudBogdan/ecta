@@ -25,7 +25,7 @@ class Color {
      * @param {number} [a=1]
      * @returns {string}
      */
-    rgb(r: number | RGBA, g: number, b: number, a: number=1): string {
+    rgb(r: number | RGBA, g?: number, b?: number, a: number=1): string {
         if (typeof r == "object")
             return `rgba(${ r[0] }, ${ r[1] }, ${ r[2] }, ${ r[3] || 1 })`;
 

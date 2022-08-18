@@ -52,7 +52,11 @@ const config = Object.freeze({
         "|": { width: 3, offsetX: -1 },
         "[": { width: 4 },
         "]": { width: 4 },
-        "ы": { width: 7, offsetX: 1 }
+        "ы": { width: 7, offsetX: 1 },
+        "ж": { width: 6 },
+        "щ": { width: 7, offsetX: 1 },
+        "ш": { width: 6 },
+        "ц": { width: 6 },
     } as IEctaFontPattern
 
 })

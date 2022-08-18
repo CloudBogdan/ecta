@@ -1,7 +1,8 @@
 import Particle from "../components/Particle.js";
 import Algorithms from "../utils/Algorithms.js";
+import Color from "../utils/Color.js";
 import config from "../utils/config.js";
-import { CustomGamepadButton, IDrawableObject, IPoint, ITilemap, RGBA } from "../utils/types.js";
+import { CustomGamepadButton, IDrawableObject, IPixelModifier, IPoint, ITilemap, RGBA } from "../utils/types.js";
 import Utils from "../utils/Utils.js";
 import Camera from "./Camera.js";
 import { Gamepad } from "./Gamepad.js";
@@ -290,11 +291,18 @@ export class Art {
     strokeEllipse(cx: number, cy: number, radiusX: number=4, radiusY: number=4, color?: string) {
         Algorithms.strokeEllipse(cx, cy, radiusX, radiusY, (x, y)=> this.pixel(x, y, color));
     }
-    star(x: number, y: number, size: number, color?: string) {
+    star(x: number, y: number, size: number, sparks: boolean=false, color?: string) {
         const halfSize = Math.round(Math.floor(size/1)*1/2);
         
-        this.line(x - halfSize, y, x + halfSize, y, 1, color);
-        this.line(x, y - halfSize, x, y + halfSize, 1, color);
+        if (sparks) {
+            this.pixel(x + halfSize, y, color);
+            this.pixel(x - halfSize, y, color);
+            this.pixel(x, y + halfSize, color);
+            this.pixel(x, y - halfSize, color);
+        } else {
+            this.line(x - halfSize, y, x + halfSize, y, 1, color);
+            this.line(x, y - halfSize, x, y + halfSize, 1, color);
+        }
     }
     /**
      * @param {number[][]} tilemap
@@ -634,6 +642,67 @@ export class Art {
             this.imageData.data[(y * this.width + x)*4 + 3],
         ]
     }
+    /**
+     * @param {number} [x=0]
+     * @param {number} [y=0]
+     * @param {number} [width=this.width]
+     * @param {number} [height=this.height]
+     * @returns {ImageData}
+     */
+    getImageData(x: number=0, y: number=0, width: number=this.width, height: number=this.height): ImageData {
+        return this.context.getImageData(x, y, width, height)
+    }
+    /**
+     * Local shaders :D
+     * 
+     * @param {(index: number, x: number, y: number, color: [r: number, g: number, b: number, a?: number], imageData: ImageData)=> { index?: number, x?: number, y?: number, color?: [r: number, g: number, b: number, a?: number] }} pixel
+     */
+    pixelsModifier(pixel: IPixelModifier) {
+        const imageData = this.context.getImageData(0, 0, this.width, this.height);
+        
+        let x = 0;
+        let y = 0;
+        
+        for (y = 0; y < this.height; y ++) {
+
+            if ((pixel(y*this.width + x, 0, y, [0, 0, 0, 0], imageData).x || 1) < 0)    
+                for (x = 0; x < this.width; x ++) {
+                    this.#modifyPixel(imageData, x, y, pixel);
+                }
+            else
+                for (x = this.width; x > 0; x --) {
+                    this.#modifyPixel(imageData, x, y, pixel);
+                }
+
+        }
+        
+        this.context.putImageData(imageData, 0, 0);
+    }
+    #modifyPixel(imageData: ImageData, x: number, y: number, pixel: IPixelModifier) {
+        const index = y*this.width + x;
+        const color: RGBA = [
+            imageData.data[index*4],
+            imageData.data[index*4+1],
+            imageData.data[index*4+2],
+            imageData.data[index*4+3],
+        ];
+        const modPixel = pixel(index, x, y, color, imageData);
+
+        const modIndex = Math.floor(modPixel.y || y)*this.width + Math.floor(modPixel.x || x);
+
+        const modResultIndex = modPixel.index || modIndex;
+        const resultColor: RGBA = [
+            modPixel.color ? modPixel.color[0] : color[0],
+            modPixel.color ? modPixel.color[1] : color[1],
+            modPixel.color ? modPixel.color[2] : color[2],
+            modPixel.color ? modPixel.color[3] : color[3]
+        ]
+
+        imageData.data[modResultIndex*4]   = resultColor[0];
+        imageData.data[modResultIndex*4+1] = resultColor[2];
+        imageData.data[modResultIndex*4+2] = resultColor[1];
+        imageData.data[modResultIndex*4+3] = resultColor[3] || 255;
+    }
 
     // Is
     /**
@@ -749,14 +818,13 @@ export class Art {
                     this.update();
     
                     for (let i = 0; i < this.particles.length; i ++) {
-                        const part = this.particles[i];
-                        part.update(this.particles, i);
+                        this.particles[i].update(this.particles, i);
                     }
                     
                     lag -= 1000/60;
                 }
                 this.draw();
-    
+                
                 // Gamepad
                 this.gamepad.updateAfter();
                 // Keyboard
@@ -851,3 +919,12 @@ export class Art {
         }
     }
 }
+
+function hex2a(hex: string): string {
+    var str = '';
+    for (var i = 0; i < hex.length; i += 2) {
+        var v = parseInt(hex.substr(i, 2), 16);
+        if (v) str += String.fromCharCode(v);
+    }
+    return str;
+}  

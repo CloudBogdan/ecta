@@ -18,4 +18,6 @@ export interface IDrawableObject {
     update: (...args: any[])=> void
 }
 
+export type IPixelModifier = (index: number, x: number, y: number, color: RGBA, imageData: ImageData)=> { index?: number, x?: number, y?: number, color?: RGBA };
+
 export type CustomGamepadButton = "right" | "left" | "up" | "down" | "A" | "B";
