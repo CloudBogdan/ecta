@@ -1,3 +1,5 @@
+import config from "./config";
+
 export type RGBA = [r: number, g: number, b: number, a?: number];
 export type HSLA = [h: number, s: number, l: number, a?: number];
 
@@ -19,5 +21,14 @@ export interface IDrawableObject {
 }
 
 export type IPixelModifier = (index: number, x: number, y: number, color: RGBA, imageData: ImageData)=> { index?: number, x?: number, y?: number, color?: RGBA };
+export interface INote {
+    name: keyof typeof config["NOTES"]
+    type: OscillatorType
+    volume: number
+    
+    context: AudioContext
+    // oscillator: OscillatorNode
+    // gain: GainNode
+}
 
 export type CustomGamepadButton = "right" | "left" | "up" | "down" | "A" | "B";

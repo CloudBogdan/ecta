@@ -1,6 +1,5 @@
 import Particle from "../components/Particle.js";
 import Algorithms from "../utils/Algorithms.js";
-import Color from "../utils/Color.js";
 import config from "../utils/config.js";
 import { CustomGamepadButton, IDrawableObject, IPixelModifier, IPoint, ITilemap, RGBA } from "../utils/types.js";
 import Utils from "../utils/Utils.js";
@@ -8,6 +7,7 @@ import Camera from "./Camera.js";
 import { Gamepad } from "./Gamepad.js";
 import { Keyboard } from "./Keyboard.js";
 import { Mouse } from "./Mouse.js";
+import Sounds from "./Sounds.js";
 
 export interface IEctaPalette {
     [key: string]: string
@@ -50,6 +50,7 @@ export class Art {
     context: CanvasRenderingContext2D
 
     started: boolean = false
+    focused: boolean = true
     clock: IEctaClock
     
     palette: IEctaPalette
@@ -65,6 +66,7 @@ export class Art {
     keyboard: Keyboard
     gamepad: Gamepad
     camera: Camera
+    sounds: Sounds
 
     particles: IDrawableObject[]
 
@@ -119,6 +121,7 @@ export class Art {
         this.keyboard = new Keyboard();
         this.gamepad = new Gamepad(this);
         this.camera = new Camera();
+        this.sounds = new Sounds();
 
         this.particles = [];
         
@@ -630,6 +633,24 @@ export class Art {
         this.#font.image.src = src;
     }
     /**
+     * @param {(string | number)} name
+     * @param {string} src
+     * @param {?number} [volume]
+     * @param {?boolean} [looped]
+     */
+    loadSound(name: string | number, src: string, volume?: number, looped?: boolean) {
+        this.sounds.load(name, src, volume, looped);
+    }
+    /**
+     * @param {(string | number)} name
+     * @param {?number} [volume]
+     * @param {?boolean} [stopBeforePlay]
+     */
+    playSound(name: string | number, volume?: number, playBackRate?: number, stopBeforePlay?: boolean) {
+        this.sounds.play(name, volume, playBackRate, stopBeforePlay);
+    }
+
+    /**
      * @param {number} x
      * @param {number} y
      * @returns {[r: number, g: number, b: number, a: number]}
@@ -806,15 +827,23 @@ export class Art {
             
             const loop = ()=> {
                 requestAnimationFrame(loop);
+                if (!this.focused) {
+                    this.clock.delta = 0;
+                    this.clock.fps = 0;
+                    lag = 0;
+                    lastTime = Date.now();
+                    return;
+                }
                 
                 this.gamepad.update();
                 this.keyboard.update();
 
-                this.camera.update();
-
-                while (lag >= 1000/60) {
+                this.camera.update();                
+                
+                while (lag >= 1000/60 && this.focused) {
                     this.clock.time ++;
                     
+                    this.sounds.update();
                     this.update();
     
                     for (let i = 0; i < this.particles.length; i ++) {
@@ -862,8 +891,14 @@ export class Art {
             start();
         })
             
+        addEventListener("focus", ()=> {
+            this.focused = true;
+        });
+        addEventListener("blur", ()=> {
+            this.focused = false;
+        });
+        
         element.appendChild(this.canvas);
-
     }
 
     // Misc

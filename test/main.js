@@ -18,6 +18,7 @@ let title = "This is Ecta!"
 function prestart() {
     // Load some assets...
     art.loadSpriteSheet("./sprites.png");
+    art.loadSound("change", "./sounds/change.wav");
 }
 function start() {
     // ...
@@ -47,7 +48,7 @@ function update() {
         isEcta = !isEcta;
         art.camera.shake(.1);
 
-        for (let i = 10; i > 0; i --) {
+        for (let i = 5; i > 0; i --) {
             art.pushParticle(
                 art.width/2 + Utils.randomInt(-20, 20), art.height/2,
                 Utils.randomInt(40, 80),
@@ -56,6 +57,8 @@ function update() {
                 "white"
             )
         }
+
+        art.playSound("change");
     }
     if (art.isMouse(2)) {
         for (let i = 10; i > 0; i --) {
@@ -82,20 +85,20 @@ function draw() {
     art.cameraFactor(1)
 
     // HELLO trail
-    for (let count = 2; count > 0; count --) {
+    // for (let count = 2; count > 0; count --) {
 
-        for (let i = 0; i < 5; i ++) {
-            // `art.tintedSprite` is very laggy!
-            // Don't use it in large quantities!
-            art.tintedSprite(
-                art.width/2 - 5*10/2 + i*10 + Utils.sin(art.time/20 + i/4 - count/3, 1, 4),
-                art.height/2-4 + Utils.sin(-art.time/20 + i/2 + count/3, 2, 6),
-                i+1 + (!isEcta ? 7 : 0),
-                Color.hsl((i * 40 + art.time*2 + count*10) % 360, 100, 50)
-            );
-        }
+    //     for (let i = 0; i < 5; i ++) {
+    //         // `art.tintedSprite` is very laggy!
+    //         // Don't use it in large quantities!
+    //         art.tintedSprite(
+    //             art.width/2 - 5*10/2 + i*10 + Utils.sin(art.time/20 + i/4 - count/3, 1, 4),
+    //             art.height/2-4 + Utils.sin(-art.time/20 + i/2 + count/3, 2, 6),
+    //             i+1 + (!isEcta ? 7 : 0),
+    //             Color.hsl((i * 40 + art.time*2 + count*10) % 360, 100, 50)
+    //         );
+    //     }
 
-    }
+    // }
     // HELLO
     for (let i = 0; i < 5; i ++) {
         art.sprite(
